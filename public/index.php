@@ -1,23 +1,24 @@
 <?php
 declare(strict_types=1);
 
-require 'ContentBlock.php';
-require 'TextBlock.php';
-require 'ImageBlock.php';
-require 'TeaserBlock.php';
-require 'Page.php';
+require __DIR__ . '/ContentBlock.php';
+require __DIR__ . '/TextBlock.php';
+require __DIR__ . '/ImageBlock.php';
+require __DIR__ . '/TeaserBlock.php';
+require __DIR__ . '/Page.php';
+require __DIR__ . '/RenderInterface.php';
+require __DIR__ . '/HtmlRenderer.php';
+require __DIR__ . '/JsonRenderer.php';
 
-require 'RenderInterface.php';
-require 'HtmlRenderer.php';
-require 'JsonRenderer.php';
+require __DIR__ . '/PageRepositoryInterface.php';
+require __DIR__ . '/InMemoryPageRepository.php';
+require __DIR__ . '/PageController.php';
 
-require 'PageRepositoryInterface.php';
-require 'InMemoryPageRepository.php';
-require 'PageController.php';
+require __DIR__ . '/CacheInterface.php';
+require __DIR__ . '/ArrayCache.php';
+require __DIR__ . '/NullCache.php';
 
-require 'CacheInterface.php';
-require 'ArrayCache.php';
-require 'NullCache.php';
+require __DIR__ . '/PageNotFoundException.php';
 
 // Daten
 $page = new Page('DI CMS');
@@ -56,3 +57,7 @@ echo $controller->show(1);
 $cache = new NullCache();
 $controller = new PageController($repo, $renderer, $cache);
 echo $controller->show(1);
+
+// Fehlerseite
+echo "<hr><h2>Fehlerseite</h2>";
+echo $controller->show(999);

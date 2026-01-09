@@ -1,7 +1,7 @@
 <?php 
 declare(strict_types=1);
 
-final class inMemoryPageRepository implements PageRepositoryInterface{
+final class InMemoryPageRepository implements PageRepositoryInterface{
   /** @var array<int, Page> */
   private array $pages;
 
@@ -9,11 +9,11 @@ final class inMemoryPageRepository implements PageRepositoryInterface{
   {
     $this->pages = $pages;
   }
-
+  /** @throws PageNotFoundException */
   public function findById(int $id): Page
   {
     if (!isset($this->pages[$id])) {
-      throw new RuntimeException("Page {$id} nicht gefunden");
+      throw new PageNotFoundException("Page {$id} nicht gefunden");
     }
 
     return $this->pages[$id];
