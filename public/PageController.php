@@ -26,7 +26,7 @@ final class PageController {
 
     } catch(PageNotFoundException $e){
         // Keine echo hier! Wir erzeugen eine Fehler-Page und rendern sie normal.
-        $errorPage = new Page('404 – Seite nicht gefunden');
+        $errorPage = new Page(new PageTitle('404 – Seite nicht gefunden'));
         $errorPage->addBlock(new TextBlock(1, "Die Seite {$pageId} existiert nicht."));
         return $this->renderer->render($errorPage);    
       }

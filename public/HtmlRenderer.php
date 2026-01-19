@@ -1,37 +1,46 @@
 <?php
 declare(strict_types=1);
 
-final class HtmlRenderer implements RenderInterface{
-  public function render(Page $page): string{
-  $title = htmlspecialchars($page->getTitle(), ENT_QUOTES, 'UTF-8');
+final class HtmlRenderer implements RenderInterface
+{
+    public function render(Page $page): string
+    {
+        $title = htmlspecialchars($page->getTitle()->toString(), ENT_QUOTES, 'UTF-8');
 
-  // HTML-String stück für stück aufbau = Valides Dokument
-  $html  = "<!doctype html>\n<html lang=\"de\">\n<head>\n";
-  $html .= "<meta charset=\"utf-8\">\n";
-  $html .= "<title>{$title}</title>\n";
-  $html .= "</head>\n<body>\n";
-  $html .= "<h1>{$title}</h1>\n";
+        $html  = "<!doctype html>\n<html lang=\"de\">\n<head>\n";
+        $html .= "<meta charset=\"utf-8\">\n";
+        $html .= "<title>{$title}</title>\n";
+        $html .= "</head>\n<body>\n";
+        $html .= "<h1>{$title}</h1>\n";
 
-  // geht über jeder Block. wird separat gerendert
-  foreach($page->getBlocks() as $block){
-    $html .= $this->renderBlock($block);
-  }
+        foreach ($page->getBlocks()->all() as $block) {
+            $html .= $this->renderBlock($block);
+        }
 
-  // Dokument schliessen.
-  $html .= "</body>\n</html>\n";
-  return $html;
+        $html .= "</body>\n</html>\n";
+        return $html;
+    }
+
+    private function renderBlock(ContentBlock $block): string
+    {
+        if ($block instanceof TextBlock) {
+            $safe = nl2br(htmlspecialchars($block->getText(), ENT_QUOTES, 'UTF-8'));
+            return "<p>{$safe}</p>\n";
+        }
+
+        if ($block instanceof ImageBlock) {
+            $src = htmlspecialchars($block->getSrc(), ENT_QUOTES, 'UTF-8');
+            $alt = htmlspecialchars($block->getAlt(), ENT_QUOTES, 'UTF-8');
+            return "<img src=\"{$src}\" alt=\"{$alt}\">\n";
+        }
+
+        if ($block instanceof TeaserBlock) {
+            $h = htmlspecialchars($block->getHeadline(), ENT_QUOTES, 'UTF-8');
+            $b = htmlspecialchars($block->getBody(), ENT_QUOTES, 'UTF-8');
+            $u = htmlspecialchars($block->getLinkUrl(), ENT_QUOTES, 'UTF-8');
+            return "<a class=\"teaser\" href=\"{$u}\"><h3>{$h}</h3><p>{$b}</p></a>\n";
+        }
+
+        return "<!-- Unbekannter Block-Typ -->\n";
+    }
 }
-
-  private function renderBlock(ContentBlock $block): string{
-
-    // Ausgabe absichern:
-    $safe = htmlspecialchars($block->getContent(), ENT_QUOTES, 'UTF-8');
-
-    return match ($block->getType()){
-      'headline' => "<h2>{$safe}</h2>\n",
-      'text' => "<p>" . nl2br($safe) . "</p>\n",
-      default => "<div>{$safe}</div>\n",
-    };
-  }
-}
-?>
