@@ -4,6 +4,13 @@ declare(strict_types=1);
 // Base directory (public/)
 $base = __DIR__;
 
+// Aufgabe 10: ViewRenderer
+require_once $base . '/ViewRenderer.php';
+
+// Aufgabe 9: Config
+require_once $base . '/Config.php';
+require_once $base . '/ConfigKeys.php';
+
 // Value Objects (Übung 8)
 require_once $base . '/PageTitle.php';
 require_once $base . '/Slug.php';
@@ -16,7 +23,7 @@ require_once $base . '/TeaserBlock.php';
 require_once $base . '/ContentBlockCollection.php';
 require_once $base . '/Page.php';
 
-// Rendering
+// Rendering - wird nicht mehr benötigt ab aufgabe 10, das wir ViewRenderer nutzen
 require_once $base . '/RenderInterface.php';
 require_once $base . '/HtmlRenderer.php';
 require_once $base . '/JsonRenderer.php';
@@ -35,9 +42,37 @@ require_once $base . '/NullCache.php';
 // Legacy (nur Funktionen laden, nicht auto-ausführen)
 require_once $base . '/Legacy.php';
 
-// --------------------
+// Aufgabe 9: ENV + Config
+$env = getenv('APP_ENV') ?: 'dev';
+
+$dev = [
+    ConfigKeys::APP_ENV => 'dev',
+    ConfigKeys::RENDERER_FORMAT => 'html',
+    ConfigKeys::FEATURE_CACHE => true,
+    ConfigKeys::FEATURE_DEBUG => true,
+];
+
+$prod = [
+    ConfigKeys::APP_ENV => 'prod',
+    ConfigKeys::RENDERER_FORMAT => 'json',
+    ConfigKeys::FEATURE_CACHE => false,
+    ConfigKeys::FEATURE_DEBUG => false,
+];
+
+$config = new Config($env === 'prod' ? $prod : $dev);
+
+// Auswahl Renderer/Cache nur im Bootstrap
+$rendererChoice = $config->getString(ConfigKeys::RENDERER_FORMAT);
+$renderer = match ($rendererChoice) {
+    'html' => new HtmlRenderer(),
+    'json' => new JsonRenderer(),
+    default => new HtmlRenderer(),
+};
+
+$cacheEnabled = $config->getBool(ConfigKeys::FEATURE_CACHE);
+$cache = $cacheEnabled ? new ArrayCache() : new NullCache();
+
 // Daten (Page aufbauen)
-// --------------------
 $page = new Page(new PageTitle('DI CMS'), new Slug('di-cms'));
 $page->addBlock(new TextBlock(1, 'Hallo Welt'));
 $page->addBlock(new ImageBlock(2, 'bild.jpg', 'Bild'));
@@ -47,58 +82,25 @@ $repo = new InMemoryPageRepository([
     1 => $page,
 ]);
 
-// --------------------
-// HTML-Ausgabe
-// --------------------
-echo "<hr><h2>HTML-Ausgabe</h2>";
-$controller = new PageController($repo, new HtmlRenderer(), new NullCache());
+// view renderer für Controller
+$view = new ViewRenderer(__DIR__ . '/views');
+
+$controller = new PageController($repo, $view, $cache);
+
+// Ausgabe (Config-gesteuert)
+echo "<hr><h2>ENV</h2>";
+echo "<p>APP_ENV: " . htmlspecialchars($config->getString(ConfigKeys::APP_ENV), ENT_QUOTES, 'UTF-8') . "</p>";
+echo "<p>Renderer: " . htmlspecialchars($rendererChoice, ENT_QUOTES, 'UTF-8') . "</p>";
+echo "<p>Cache enabled: " . ($cacheEnabled ? 'true' : 'false') . "</p>";
+
+echo "<hr><h2>MVC-Ausgabe</h2>";
 echo $controller->show(1);
 
-// --------------------
-// JSON-Ausgabe
-// --------------------
-echo "<hr><h2>JSON-Ausgabe</h2>";
-$controller = new PageController($repo, new JsonRenderer(), new NullCache());
-echo $controller->show(1);
-
-// --------------------
-// Repository findById (Page)
-// --------------------
-echo "<hr><h2>Repository: findById(Page)</h2>";
-$renderer = new JsonRenderer();
-echo $renderer->render($repo->findById(1));
-
-// --------------------
-// Collection findById (ContentBlock)
-// --------------------
-echo "<hr><h2>Collection: findById(ContentBlock)</h2>";
-$block = $repo->findById(1)->getBlocks()->findById(2);
-echo "<pre>";
-var_dump($block);
-echo "</pre>";
-
-// --------------------
-// Cache-Test
-// --------------------
-echo "<hr><h2>Cache</h2>";
-$cache = new ArrayCache();
-$controller = new PageController($repo, $renderer, $cache);
-echo $controller->show(1);
-
-$cache = new NullCache();
-$controller = new PageController($repo, $renderer, $cache);
-echo $controller->show(1);
-
-// --------------------
 // Fehlerseite TEST
-// --------------------
 echo "<hr><h2>Fehlerseite</h2>";
 echo $controller->show(999);
 
-// --------------------
-// Legacy (nur wenn showPage() existiert)
-// Achtung: Legacy.php darf NICHT selbst showPage(1) ausführen.
-// --------------------
+// Legacy
 echo "<hr><h2>Legacy</h2>";
 if (function_exists('showPage')) {
     showPage(1);
@@ -106,9 +108,7 @@ if (function_exists('showPage')) {
     echo "Legacy showPage() nicht gefunden.";
 }
 
-// --------------------
 // PageTitle Validierung
-// --------------------
 echo "<hr><h2>PageTitle Validierung</h2>";
 try {
     $ok = new PageTitle('Kontakt');
@@ -117,7 +117,6 @@ try {
 
     echo "OK: " . $p->getTitle()->toString() . "<br>";
 
-    // Ungültig (muss Exception werfen)
     new PageTitle('');
 } catch (InvalidArgumentException $e) {
     echo "Fehler: " . htmlspecialchars($e->getMessage(), ENT_QUOTES, 'UTF-8');

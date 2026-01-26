@@ -1,0 +1,1 @@
+<p><?= nl2br(htmlspecialchars($text)) ?></p>

@@ -1,0 +1,7 @@
+<?php
+declare(strict_types=1);
+
+interface LoggerInterface
+{
+    public function debug(string $message): void;
+}
