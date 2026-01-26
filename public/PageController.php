@@ -39,10 +39,10 @@ final class PageController {
         }
       }
 
-      $html = $this->view->render('page.php', [
-        'title' => $page->getTitle()->toString(),
+      $html = $this->view->renderWithLayout('page.php', [
+        'pageTitle' => $page->getTitle()->toString(),
         'blocks' => $blocksHtml
-      ]);
+      ], layout: 'layout.php');
 
       $this->cache->set($cacheKey, $html); // HTML wird gecached
 
@@ -56,10 +56,10 @@ final class PageController {
           ])
         ];
 
-        $html = $this->view->render('page.php', [
-          'title' => '404 – Seite nicht gefunden',
+        $html = $this->view->renderWithLayout('page.php', [
+          'pageTitle' => '404 – Seite nicht gefunden',
           'blocks' => $blocksHtml
-        ]);
+        ], layout: 'layout.php');
 
         return $html;
       }

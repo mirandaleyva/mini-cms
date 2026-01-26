@@ -4,6 +4,9 @@ declare(strict_types=1);
 // Base directory (public/)
 $base = __DIR__;
 
+// Aufgabe 11: Template Helpers
+require_once $base . '/TemplateHelpers.php';
+
 // Aufgabe 10: ViewRenderer
 require_once $base . '/ViewRenderer.php';
 
@@ -41,6 +44,7 @@ require_once $base . '/NullCache.php';
 
 // Legacy (nur Funktionen laden, nicht auto-ausführen)
 require_once $base . '/Legacy.php';
+
 
 // Aufgabe 9: ENV + Config
 $env = getenv('APP_ENV') ?: 'dev';
@@ -121,3 +125,7 @@ try {
 } catch (InvalidArgumentException $e) {
     echo "Fehler: " . htmlspecialchars($e->getMessage(), ENT_QUOTES, 'UTF-8');
 }
+
+// Helpers Laden
+echo "<hr><h2>Template Helpers Test</h2>";
+$page->addBlock(new TextBlock(99, '<script>alert(1)</script>'));

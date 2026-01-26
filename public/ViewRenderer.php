@@ -21,4 +21,16 @@ final class ViewRenderer
         require $file;
         return (string) ob_get_clean();
     }
+
+    public function renderWithLayout(string $template, array $data, string $layout): string
+    {
+        // 1) Content rendern
+        $content = $this->render($template, $data);
+
+        // 2) Layout rendern (bekommt $content + Layout-Daten)
+        $layoutData = $data;
+        $layoutData['content'] = $content;
+
+        return $this->render($layout, $layoutData);
+    }
 }
